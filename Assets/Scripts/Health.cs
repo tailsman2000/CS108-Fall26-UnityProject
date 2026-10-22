@@ -71,9 +71,35 @@ public class Health : MonoBehaviour
 
     private void Die()
     {
-        // Restore color before dying in case death triggers an animation
-        spriteRenderer.color = originalColor;
-        OnDeath?.Invoke();
-        Destroy(gameObject);
+        currentHealth = 0;
+        
+        // Disable physics and collision immediately for all objects
+        if (TryGetComponent<Collider2D>(out Collider2D col)) col.enabled = false;
+        if (TryGetComponent<Rigidbody2D>(out Rigidbody2D rb)) rb.simulated = false;
+        if (TryGetComponent<SpriteRenderer>(out SpriteRenderer sr)) sr.enabled = false;
+
+        // Check if this is the Player or an Enemy
+        if (CompareTag("Player"))
+        {
+            if (TryGetComponent<PlayerController>(out PlayerController controller)) controller.enabled = false;
+            if (TryGetComponent<PlayerRespawn>(out PlayerRespawn respawnScript)) respawnScript.TriggerRespawn();
+        }
+        else
+        {
+            // If it's an enemy, disable its AI script and trigger enemy respawn
+            if (TryGetComponent<Enemy>(out Enemy enemyScript)) enemyScript.enabled = false;
+            if (TryGetComponent<EnemyRespawn>(out EnemyRespawn enemyRespawn)) enemyRespawn.TriggerRespawn();
+        }
+    }
+
+    public int GetCurrentHealth()
+    {
+        return currentHealth;
+    }
+
+    public void ResetHealth()
+    {
+        currentHealth = maxHealth;
+        isInvincible = false;
     }
 }
